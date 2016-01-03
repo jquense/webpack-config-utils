@@ -1,0 +1,54 @@
+{
+  "name": "webpack-config-utils",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "mocha test/*.js -R spec --compilers js:babel/register",
+    "tdd": "npm run test -- --watch",
+    "build": "babel src --out-dir lib --stage=1",
+    "prepublish": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jquense/webpack-config-utils.git"
+  },
+  "files": [
+    "lib",
+    "README.md"
+  ],
+  "keywords": [
+    "webpack",
+    "config",
+    "utils"
+  ],
+  "author": "jquense",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jquense/webpack-config-utils/issues"
+  },
+  "homepage": "https://github.com/jquense/webpack-config-utils#readme",
+  "peerDependencies": {
+    "webpack": "^1.9.11"
+  },
+  "dependencies": {
+    "babel": "^5.8.34",
+    "babel-plugin-object-assign": "^1.2.1",
+    "chai": "^3.4.1",
+    "css-loader": "^0.23.1",
+    "escape-regexp": "0.0.1",
+    "ip": "^1.1.0",
+    "json-loader": "^0.5.4",
+    "jsonic": "^0.2.2",
+    "lodash": "^3.10.1",
+    "mocha": "^2.3.4",
+    "node-libs-browser": "^0.5.3",
+    "style-loader": "^0.13.0",
+    "webpack": "^1.12.9"
+  },
+  "devDependencies": {
+    "babel-loader": "^5.4.0",
+    "css-loader": "^0.23.1",
+    "style-loader": "^0.13.0"
+  }
+}
