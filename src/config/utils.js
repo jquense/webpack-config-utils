@@ -20,11 +20,14 @@ export function ensureConfig(config) {
 
   return defaultsDeep(config, {
     resolve: {
-      extensions: ['', 'js'],
-      alias: {}
+      extensions: ['', '.js'],
+      alias: {},
+      root: []
     },
     module: {
-      loaders: []
+      loaders: [],
+      postLoaders: [],
+      preLoaders: []
     },
 
     plugins: []

@@ -33,10 +33,13 @@
   },
   "dependencies": {
     "babel": "^5.8.34",
+    "babel-plugin-dev-expression": "^0.1.0",
     "babel-plugin-object-assign": "^1.2.1",
     "chai": "^3.4.1",
     "css-loader": "^0.23.1",
     "escape-regexp": "0.0.1",
+    "extract-text-webpack-plugin": "^0.9.1",
+    "file-loader": "^0.8.5",
     "ip": "^1.1.0",
     "json-loader": "^0.5.4",
     "jsonic": "^0.2.2",
@@ -44,6 +47,7 @@
     "mocha": "^2.3.4",
     "node-libs-browser": "^0.5.3",
     "style-loader": "^0.13.0",
+    "url-loader": "^0.5.7",
     "webpack": "^1.12.9"
   },
   "devDependencies": {

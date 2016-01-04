@@ -1,4 +1,5 @@
 import chai from 'chai'
+import path from 'path'
 import capitalize from 'lodash/string/capitalize'
 import configure from '../src/config/configure.js'
 
@@ -253,6 +254,45 @@ describe('creating configs', () => {
         configure()['in' + env].should.be.a('function')
         configure()['notIn' + env].should.be.a('function')
       })
+    })
+  })
+
+  it('should add extensions', () => {
+    compare(
+      configure()
+        .extension('.jsx', 'es6', 'js')
+    , {
+      resolve: {
+        extensions: ['', '.js', '.jsx', '.es6']
+      }
+    })
+  })
+
+  it('should define roots', () => {
+    compare(
+      configure()
+        .root('./config', './config', path.resolve(__dirname, '../basic'))
+    , {
+      resolve: {
+        root: [
+          path.resolve('./config'),
+          path.resolve('./basic')
+        ]
+      }
+    })
+  })
+
+  it('should define aliases', () => {
+    compare(
+      configure()
+        .alias('bl', 'css-loader')
+        .alias('bl', 'babel-loader')
+    , {
+      resolve: {
+        alias: {
+          bl: 'babel-loader'
+        }
+      }
     })
   })
 

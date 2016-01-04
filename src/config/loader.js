@@ -51,24 +51,38 @@ function lilBuilder(loader) {
   }), { loader, _query })
 }
 
+function buildLoaders(loaders) {
+  return loaders.map(loader => {
+    if (typeof loader === 'function')
+      return loader(lilBuilder)
+
+    loader = lilBuilder(loader)
+
+    if (canChain(loader))
+      loader = loader.loader
+
+    return loader
+  })
+}
+
 let loaderBuilder = {
-  using(...loaders) {
-    this._loaders = this._loaders.concat(
-      loaders.map(loader => {
-
-        if (typeof loader === 'function') {
-          return loader(lilBuilder)
-        }
-
-        loader = lilBuilder(loader)
-
-        if (canChain(loader))
-          loader = loader.loader
-
-        return loader
-      })
-    )
+  set(...loaders) {
+    this._loaders = buildLoaders(loaders)
     return this
+  },
+
+  unshift(...loaders) {
+    this._loaders = buildLoaders(loaders).concat(this._loaders)
+    return this
+  },
+
+  push(...loaders) {
+    this._loaders = this._loaders.concat(buildLoaders(loaders))
+    return this
+  },
+
+  when(regex) {
+    this._tests.push(regex)
   },
 
   query(query) {
@@ -145,7 +159,15 @@ let loaderBuilder = {
     assert.ok(this._exts.length || this._tests.length,
       'All loaders must match some file type with ext(), or contain a test()');
 
-    result.test = new RegExp('\\.(' + this._exts.map(escape).join('|') + ')$', 'i')
+    result.test = []
+
+    if (this._exts.length)
+      result.test.push(
+        new RegExp('\\.(' + this._exts.map(escape).join('|') + ')$', 'i')
+      )
+
+    if (this._tests.length)
+      result.test.push(...this._tests)
 
     if (this._includes.length)
       result.include = this._includes
@@ -172,7 +194,7 @@ export default function buildLoader(...loaders) {
   })
 
   if (loaders.length)
-    builder.using(...loaders)
+    builder.set(...loaders)
 
   return builder;
 }

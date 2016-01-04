@@ -4,6 +4,7 @@ import webpack from 'webpack';
 
 import set from 'lodash/object/set';
 import merge from 'lodash/object/merge';
+import union from 'lodash/array/union';
 import transform from 'lodash/object/transform';
 
 import * as inject from './inject';
@@ -11,6 +12,23 @@ import * as utils from './utils';
 import validate from './validate';
 
 import clone from './clone';
+
+const DEDUPE_ARRAY = [
+    'root'
+  , 'loaders'
+  , 'preLoaders'
+  , 'postLoaders'
+  , 'extensions'
+];
+
+function concat(a, b, key) {
+  if (Array.isArray(a)) {
+    if (DEDUPE_ARRAY.indexOf(key) !== -1)
+      return union(a, b)
+    else
+      return a.concat(b)
+  }
+}
 
 export default function create(defaults, options = {}) {
   let initConfig;
@@ -21,6 +39,7 @@ export default function create(defaults, options = {}) {
     initConfig = {
       _config: utils.ensureConfig(defaults || {}),
       options,
+      _onResolve: [],
       _loaders: {},
       _preLoaders: {},
       _postLoaders: {},
@@ -66,7 +85,7 @@ let fluent = {
   raw(fn) {
     typeof fn === 'function'
       ? fn(this._config)
-      : Object.assign(this._config, fn)
+      : merge(this._config, fn, concat)
     return this
   },
 
@@ -89,30 +108,32 @@ let fluent = {
     return this
   },
 
-  isHot() {
-    return !!this._isHot
+  isHot(fn) {
+    if (this._isHot) fn(this)
+    return this
   },
 
   hot(reload = true) {
-    let entry = this._config.entry;
-
-    if (reload && !this._isHot) {
-      let plugin = new webpack.HotModuleReplacementPlugin();
-
-      this._isHot = true
-      this.replacePlugin('$$hmr', plugin)
-
-      if (entry)
-        utils.addHotEntries(entry)
-    }
-    else if (!reload && this._isHot) {
-      this._isHot = false
-      if (!entry) return this
-      utils.removeHotEntries(entry)
-      this.removePlugin('$$hmr')
-    }
-
     return this
+      .notInProduction(() => {
+        let entry = this._config.entry;
+
+        if (reload && !this._isHot) {
+          let plugin = new webpack.HotModuleReplacementPlugin();
+
+          this._isHot = true
+          this.replacePlugin('$$hmr', plugin)
+
+          if (entry)
+            utils.addHotEntries(entry)
+        }
+        else if (!reload && this._isHot) {
+          this._isHot = false
+          if (!entry) return this
+          utils.removeHotEntries(entry)
+          this.removePlugin('$$hmr')
+        }
+      })
   },
 
   define(pathOrObject, value) {
@@ -132,15 +153,27 @@ let fluent = {
     return this
   },
 
+  onResolve(fn) {
+    if (typeof fn === 'function')
+      this._onResolve.push(fn);
+    return this
+  },
 
   resolve() {
     validate(this._config)
+    this._onResolve.forEach(fn => fn(this._config))
+
+    // validate again since the onResolve hooks
+    // may have changed something
+    validate(this._config)
+
     return this._config
   }
 }
 
 inject.loader(fluent)
 inject.plugin(fluent)
+inject.resolve(fluent)
 inject.env(fluent)
 
 function deepTransform(obj, fn) {

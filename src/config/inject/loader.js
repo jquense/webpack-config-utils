@@ -7,6 +7,9 @@ import trimRight from 'lodash/string/trimRight';
 import * as utils from '../utils';
 import loaderBuilder from '../loader';
 
+const REPLACE = 'replace';
+const ADJUST = 'adjust';
+
 export default function injectLoaders(obj) {
 
   ['', 'pre', 'post'].forEach(type => {
@@ -14,6 +17,7 @@ export default function injectLoaders(obj) {
     let name = prefix => (prefix || '') + (prefix ? capitalize(suffix): suffix)
 
     let add = name()
+      , adjust = name('adjust')
       , replace = name('replace')
       , remove = name('remove')
       , field = '_' + add + 's'
@@ -22,41 +26,66 @@ export default function injectLoaders(obj) {
 
     Object.assign(obj, {
 
-      [add](name, loader, _replace) {
-        let current = ensureField(this)[name];
+      [add](name, loader, _action) {
+        let builder
+          , current = ensureField(this)[name];
 
-        if (!loader || loader === true) {
-          loader = loaderBuilder(name)
-            .for(trimRight(name, '-loader'))
-            .resolve()
-        }
-
-        assert(!(current && _replace !== true),
+        assert(!(current && !_action),
             'There is already a ' + add + ' or set of ' + add + 's by this name: "' + name + '". '
-          + 'use `' + replace + '()` to override an existing loader'
+          + 'use `' + replace + '()` to override an existing loader or `' + adjust + '()` or edit this one.'
         );
 
+        if (!loader || loader === true) {
+          loader = loaderBuilder(name).for(trimRight(name, '-loader'))
+        }
+
         if (loader) {
+          if (current)
+            current = current.builder || current.loader;
+
           if (typeof loader === 'function') {
-            loader = loader(loaderBuilder, current)
-            loader = loader.resolve ? loader.resolve() : loader
+            builder = _action === ADJUST
+              ? loader(current)
+              : loader(loaderBuilder, current);
+          }
+          else if (loader.resolve) {
+            builder = loader
           }
 
-          ensureField(this)[name] = utils.addLoader(
-            get(this, '_config.module.loaders'), loader, current)
+          if (builder && builder.resolve) {
+            if (!builder._loaders.length)
+              loader.set(name)
+
+            loader = builder.resolve()
+          }
+
+          loader = utils.addLoader(
+            get(this, '_config.module.loaders')
+            , loader
+            , _action === REPLACE ? current : undefined
+          )
+
+          ensureField(this)[name] = {
+            builder,
+            loader
+          }
         }
 
         return this
       },
 
       [replace](name, loader) {
-        return this[add](name, loader, true)
+        return this[add](name, loader, REPLACE)
+      },
+
+      [adjust](name, loader) {
+        return this[add](name, loader, ADJUST)
       },
 
       [remove](name) {
         let loaders = ensureField(this)[name]
         delete loaders[name];
-        remove(this._config.module.loaders, loaders)
+        remove(this._config.module.loaders, loaders.loader)
         return this
       },
     })
