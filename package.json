@@ -5,7 +5,11 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "mocha test/*.js -R spec --compilers js:babel/register",
+    "test-presets": "mocha test/**/unit.js -R spec --compilers js:babel/register",
     "tdd": "npm run test -- --watch",
+    "tdd-presets": "npm run test-presets -- --watch",
+    "preset": "node ./integration/run.js",
+    "preset-visual": "npm run preset -- --open",
     "build": "babel src --out-dir lib --stage=1",
     "prepublish": "npm run build"
   },
@@ -40,12 +44,18 @@
     "escape-regexp": "0.0.1",
     "extract-text-webpack-plugin": "^0.9.1",
     "file-loader": "^0.8.5",
+    "html-webpack-plugin": "^1.7.0",
+    "image-webpack-loader": "^1.6.2",
     "ip": "^1.1.0",
     "json-loader": "^0.5.4",
     "jsonic": "^0.2.2",
+    "less-loader": "^2.2.2",
     "lodash": "^3.10.1",
     "mocha": "^2.3.4",
     "node-libs-browser": "^0.5.3",
+    "raw-loader": "^0.5.1",
+    "react-hot-loader": "^1.3.0",
+    "sass-loader": "^3.1.2",
     "style-loader": "^0.13.0",
     "url-loader": "^0.5.7",
     "webpack": "^1.12.9"
@@ -53,6 +63,13 @@
   "devDependencies": {
     "babel-loader": "^5.4.0",
     "css-loader": "^0.23.1",
-    "style-loader": "^0.13.0"
+    "karma": "^0.13.17",
+    "karma-chrome-launcher": "^0.2.2",
+    "karma-mocha": "^0.2.1",
+    "karma-sinon-chai": "^1.1.0",
+    "memory-fs": "^0.3.0",
+    "open": "0.0.5",
+    "style-loader": "^0.13.0",
+    "yargs": "^3.31.0"
   }
 }

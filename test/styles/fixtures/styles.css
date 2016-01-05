@@ -1,0 +1,13 @@
+
+body {
+  font-size: 24px;
+}
+
+.box {
+  padding: 20px;
+  border: 1px blue solid;
+}
+
+.red {
+  color: red;
+}

@@ -103,6 +103,19 @@ export function addLoader(loaders, newLoaders = [], replaces) {
   return newLoaders.length <= 1 ? newLoaders[0] : newLoaders
 }
 
+export function removeLoader(loaders, remove = []) {
+  let idx = loaders.indexOf(replaces[0]);
+
+  [].concat(remove)
+    .forEach(loader => {
+      let idx = loaders.indexOf(loader)
+
+      if (idx !== -1)
+        loaders.splice(idx, 1)
+    })
+}
+
+
 export function addPlugin(plugins, newPlugins, replaces) {
   replaces = [].concat(replaces);
 
@@ -126,6 +139,14 @@ export function tryParseQuery(query) {
   } catch (_) {}
 
   return query
+}
+
+export function stringifyQuery(query) {
+  if (typeof query === 'string') return query
+
+  return Object.keys(query).reduce((str, key) => {
+    return str + (str ? '&' : '') + key + '=' + query[key]
+  }, '')
 }
 
 export function addHotEntries(entry) {

@@ -2,16 +2,13 @@ import chai from 'chai'
 import path from 'path'
 import capitalize from 'lodash/string/capitalize'
 import configure from '../src/config/configure.js'
+import { compare } from '../test-helpers';
 
 let expect = chai.expect;
 
 chai.should()
 
-function compare(builder, config) {
-  expect(builder.resolve()).to.eql(
-    configure(config || {}).resolve()
-  )
-}
+
 
 describe('creating configs', () => {
 

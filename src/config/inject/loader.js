@@ -24,6 +24,8 @@ export default function injectLoaders(obj) {
 
     let ensureField = ctx => ctx[field] || (ctx[field] = {})
 
+    obj.ARRAY_DEDUPE_KEYS.push(add + 's')
+
     Object.assign(obj, {
 
       [add](name, loader, _action) {
@@ -40,10 +42,12 @@ export default function injectLoaders(obj) {
         }
 
         if (loader) {
-          if (current)
-            current = current.builder || current.loader;
+          let currentLoader = current && current.loader;
+
+          current = current && (current.builder || current.loader);
 
           if (typeof loader === 'function') {
+
             builder = _action === ADJUST
               ? loader(current)
               : loader(loaderBuilder, current);
@@ -52,17 +56,18 @@ export default function injectLoaders(obj) {
             builder = loader
           }
 
+
           if (builder && builder.resolve) {
             if (!builder._loaders.length)
-              loader.set(name)
+              builder.set(name)
 
             loader = builder.resolve()
           }
 
           loader = utils.addLoader(
-            get(this, '_config.module.loaders')
+              get(this, '_config.module.loaders')
             , loader
-            , _action === REPLACE ? current : undefined
+            , currentLoader
           )
 
           ensureField(this)[name] = {

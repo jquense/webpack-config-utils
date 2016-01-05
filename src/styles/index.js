@@ -1,17 +1,52 @@
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
+import assets from '../assets';
 
-export default function styleConfig(config) {
-  return config
-    .loader('styles', function(loader) {
-      return loader('style', 'css').ext('css')
-    })
+function basic(config) {
+  config
+    .use(assets)
+    .loader('styles', loader => loader('style', 'css')
+      .ext('css')
+    )
 }
 
-styleConfig.extract = function(config) {
-  var extract = new ExtractTextPlugin('[name]-styles.css', { allChunks: true })
-    , extractLoader = ExtractTextPlugin.extract('style-loader', 'css-loader');
+let presets = basic
 
-  return styleConfig(config)
-    .plugin('extract-styles', extract)
-    .replaceLoader('styles', loader => loader(extractLoader).ext('css'))
+presets.basic = basic
+
+presets.less = function(config) {
+  config
+    .use(basic)
+    .adjustLoader('styles', loader => loader
+      .push('less')
+      .ext('less')
+    )
+}
+
+presets.sass = function(config) {
+  config
+    .use(basic)
+    .adjustLoader('styles', loader => loader
+      .push('sass')
+      .ext('sass', 'scss')
+    )
+}
+
+
+Object.keys(presets)
+  .forEach(key => createExtractVariant(presets[key]))
+
+module.exports = presets
+
+function createExtractVariant(preset) {
+  preset.extract = function(config) {
+    var extract = new ExtractTextPlugin('[name]-styles.css', { allChunks: true });
+
+    config
+      .use(preset)
+      .plugin('extract-styles', extract)
+      .adjustLoader('styles', loader => {
+        let parts = loader.toInline().split('!')
+        return loader.set(ExtractTextPlugin.extract(parts.shift(), parts))
+      })
+  }
 }

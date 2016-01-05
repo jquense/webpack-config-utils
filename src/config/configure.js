@@ -1,7 +1,7 @@
 import path from 'path';
 import assert from 'assert';
 import webpack from 'webpack';
-
+import { EventEmitter } from 'events';
 import set from 'lodash/object/set';
 import merge from 'lodash/object/merge';
 import union from 'lodash/array/union';
@@ -13,22 +13,7 @@ import validate from './validate';
 
 import clone from './clone';
 
-const DEDUPE_ARRAY = [
-    'root'
-  , 'loaders'
-  , 'preLoaders'
-  , 'postLoaders'
-  , 'extensions'
-];
-
-function concat(a, b, key) {
-  if (Array.isArray(a)) {
-    if (DEDUPE_ARRAY.indexOf(key) !== -1)
-      return union(a, b)
-    else
-      return a.concat(b)
-  }
-}
+const ARRAY_DEDUPE_KEYS = [];
 
 export default function create(defaults, options = {}) {
   let initConfig;
@@ -59,13 +44,26 @@ export default function create(defaults, options = {}) {
   return config
 }
 
-let fluent = {
+function concat(a, b, key) {
+  if (Array.isArray(a)) {
+    if (fluent.ARRAY_DEDUPE_KEYS.indexOf(key) !== -1)
+      return union(a, b)
+    else
+      return a.concat(b)
+  }
+}
+
+
+let fluent = Object.assign(new EventEmitter(), {
+  ARRAY_DEDUPE_KEYS,
+
   clone() {
     return clone(this)
   },
 
   sourcemap(type = 'source-map') {
     this._config.devtool = type;
+    return this
   },
 
   entry(name, entry) {
@@ -79,13 +77,7 @@ let fluent = {
     if (this._isHot)
       utils.addHotEntries(this._config.entry)
 
-    return this
-  },
-
-  raw(fn) {
-    typeof fn === 'function'
-      ? fn(this._config)
-      : merge(this._config, fn, concat)
+    this.emit('entry')
     return this
   },
 
@@ -100,11 +92,19 @@ let fluent = {
     if (publicPath)
       this._config.output.publicPath = publicPath;
 
+    this.emit('output')
     return this
   },
 
   use(...fns) {
     fns.forEach(fn => fn && fn(this))
+    return this
+  },
+
+  raw(fn) {
+    typeof fn === 'function'
+      ? fn(this._config)
+      : merge(this._config, fn, concat)
     return this
   },
 
@@ -126,12 +126,18 @@ let fluent = {
 
           if (entry)
             utils.addHotEntries(entry)
+
+          this.emit('hot', this._isHot)
         }
         else if (!reload && this._isHot) {
           this._isHot = false
-          if (!entry) return this
-          utils.removeHotEntries(entry)
           this.removePlugin('$$hmr')
+
+          if (entry) {
+            utils.removeHotEntries(entry)
+          }
+
+          this.emit('hot', this._isHot)
         }
       })
   },
@@ -149,27 +155,20 @@ let fluent = {
     }
 
     this.replacePlugin('$$define', new webpack.DefinePlugin(defines))
-
-    return this
-  },
-
-  onResolve(fn) {
-    if (typeof fn === 'function')
-      this._onResolve.push(fn);
     return this
   },
 
   resolve() {
     validate(this._config)
-    this._onResolve.forEach(fn => fn(this._config))
+    this.emit('resolve')
 
     // validate again since the onResolve hooks
     // may have changed something
     validate(this._config)
-
     return this._config
   }
-}
+})
+
 
 inject.loader(fluent)
 inject.plugin(fluent)
